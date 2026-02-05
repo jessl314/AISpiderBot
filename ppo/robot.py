@@ -1,5 +1,8 @@
 import numpy as np
 
+"""
+robot class which stores the state of the robot and defines logic to update it. It also defines the logic for taking actions. 
+"""
 # global variables
 DEFAULT_SERVO_POSITIONS = np.zeros(12)
 #MOVE_FORWARD =
@@ -31,12 +34,25 @@ class Robot:
         # for i in range(12):
         #     angle = (choice[i] + 1) * 90 # Simple map -1...1 to 0...180
         #     pca.servo[i].angle = angle
-    def calculate_reward(self):
-        ground_clearance = np.mean(self.lidar_distances)
-        if ground_clearance < 0.02:
-            return - 10.0
-        return 1.0
+    def is_fallen(self):
+        """
+        calculating the lowest point of the robot and the tilt (left distance from ground - right) to determine if standing or collapsed
+        
+        """
+        left_dist = self.lidar_distances[90]
+        right_dist = self.lidar_distances[270]
+        ground_clearance = np.min(self.lidar_distances[150:210])
+        # if robot underside is less than 0.02 or
+        # there is a tilt of more than 0.15, robot has fallen
+        if (ground_clearance < 0.02) or abs(left_dist - right_dist) > 0.15:
+            return True
+        return False
+
     def get_state(self):
+        """
+        gets current state as represented by a 372-dim concatenated numpy array for the 360 LiDAR inputs and 12 servo inputs
+        
+        """
         # clean-lidar handles out of range LiDAR by replacing 0s with 10.0
         clean_lidar = np.where(self.lidar_distances <= 0, 10.0, self.lidar_distances)
         # brings the lidar into range of 0-1 for the model
