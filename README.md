@@ -12,7 +12,7 @@ use python -m pip install package-name
 - if import didn't work
 
 
-mac: source venv/bin/activate
+mac & linux: source venv/bin/activate
 
 
 pip install -r requirements.txt
