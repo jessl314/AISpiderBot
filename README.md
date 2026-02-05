@@ -16,3 +16,8 @@ mac: source venv/bin/activate
 
 
 pip install -r requirements.txt
+
+
+notes from zims code (idk, if this is right):
+
+- need to make sure action is vector of continuous values

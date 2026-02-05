@@ -71,6 +71,43 @@ class PPOMemory:
         """
         self.ptr = 0
     
-class ActorNetwork(nn.Module):
-    pass
+
+class Actor(nn.Module):
+    def __init__(self, n_inputs=372, n_actions=12, alpha=0.003, chkpt_dir='tmp/ppo'):
+        """
+        - actor network is implemented as a feed-forward
+        - (sequential) neural network
+        - 1st layer: maps input to 256 "features" to find patterns
+        - 2nd layer: combines the features to understand more
+        - 3rd layer: output layer, maps the 256 features to mean target positions for each servo
+        - Tanh: keeps continous values between -1 and 1
+        - ReLU: allows for non-linear boundaries by giving negative signals a zero value
+        """
+        super(Actor, self).__init__()
+        # stores the neural network weights
+        self.checkpoint_file = os.path.join(chkpt_dir, 'actor_ppo.pth')
+        self.actor = nn.Sequential(
+            nn.Linear(n_inputs, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, n_actions),
+            nn.Tanh()
+        )
+        # nn.Softmax(dim=-1) - for discrete actions?
+
+        # defines learning algorithm to update weights
+        # using Adam which auto-adjusts learning rate 
+        # for each individual weight
+        self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+        # detects GPU and sets device to it if available
+        # else falls back to CPU
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
+
+
+
+
+
+
 
