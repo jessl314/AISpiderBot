@@ -3,6 +3,17 @@
 Learning to implement neural network with numpy
 and Proxmimal Policy Optimization with Pytorch
 
+ data stuctures needed
+ - Class for replay buffer -> lists
+ 
+ - Class for actor network, class for critic network
+
+ - Class for agent (ties everything together)
+
+ - Main loop to train and evaluate
+ 
+
+
 VIRTUAL ENVIRONMENT
 
 python -m venv venv
