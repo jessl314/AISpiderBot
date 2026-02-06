@@ -1,4 +1,7 @@
 # reference ddpg actor.py 
+# Stochastic polcy
+# critic network -> V(s)
+
 import torch.nn as nn
 from torch.distributions import Normal
 
