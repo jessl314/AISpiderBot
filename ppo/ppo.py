@@ -74,6 +74,10 @@ class PPOMemory:
     
 
 class Actor(nn.Module):
+    """
+    neural network that takes action based on the advantages each potential action could give.
+    
+    """
     def __init__(self, n_inputs=372, n_actions=12, alpha=0.003, chkpt_dir='tmp/ppo'):
         """
         - actor network is implemented as a feed-forward
