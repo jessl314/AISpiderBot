@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.categorical import Categorical
+from torch.distributions import Normal
 
 class PPOMemory:
     """
@@ -86,6 +87,7 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         # stores the neural network weights
         self.checkpoint_file = os.path.join(chkpt_dir, 'actor_ppo.pth')
+        self.log_std = nn.Parameter(torch.zeros(n_actions))
         self.actor = nn.Sequential(
             nn.Linear(n_inputs, 256),
             nn.ReLU(),
@@ -104,6 +106,31 @@ class Actor(nn.Module):
         # else falls back to CPU
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
+
+    def forward(self, state):
+        """
+        given actor's best guess of action based on the state and the exploration factor, create a probability Normal distribution where the center is mu
+        
+        """
+        mu = self.actor(state)
+        sigma = torch.exp(self.log_std)
+        dist = Normal(mu, sigma)
+        return dist
+    
+    def save_checkpoint(self):
+        """
+        saves the information in the state dictionary provided via inheriting from nn.Module into a checkpoint file
+        """
+        torch.save(self.state_dict(), self.checkpoint_file)
+    
+    def load_checkpoint(self):
+        """
+        loads state dictionary from the checkpoint file
+        
+        """
+        self.load_state_dict(torch.load(self.checkpoint_file))
+
+        
 
 
 
