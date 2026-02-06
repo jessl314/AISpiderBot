@@ -1,5 +1,7 @@
 # AISpiderBot
 
+Learning to implement neural network with numpy
+and Proxmimal Policy Optimization with Pytorch
 
 VIRTUAL ENVIRONMENT
 
