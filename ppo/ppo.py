@@ -15,6 +15,7 @@ class PPOMemory:
     def __init__(self, mem_size, state_dim, action_dim, batch_size):
         self.mem_size = mem_size
         self.batch_size = batch_size
+        
         # pre-allocating everything as float32 numpy arrays
         self.states = np.zeros((mem_size, state_dim), dtype=np.float32)
         self.actions = np.zeros((mem_size, action_dim), dtype=np.float32)
@@ -22,6 +23,7 @@ class PPOMemory:
         self.vals = np.zeros((mem_size), dtype=np.float32)
         self.rewards = np.zeros((mem_size), dtype=np.float32)
         self.dones = np.zeros((mem_size), dtype=np.float32)
+
         # using a pointer to tell computer which row in the numpy arrays 
         # should recieve the next piece of data
         # replaces append from lists
@@ -106,10 +108,14 @@ class Actor(nn.Module):
         # using Adam which auto-adjusts learning rate 
         # for each individual weight
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+        self.loss_fn = nn.MSELoss()
         # detects GPU and sets device to it if available
         # else falls back to CPU
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
+
+    def clear_optimizer():
+        self.optimizer.zero_grad()
 
     def forward(self, state):
         """
@@ -153,8 +159,13 @@ class Critic(nn.Module):
             nn.Linear(256, 1)
         )
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+        self.loss_fn = nn.MSELoss()
+
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
+
+    def clear_optimizer():
+        self.optimizer.zero_grad()
 
     def forward(self, state):
         return self.critic(state)
@@ -183,11 +194,15 @@ class Agent:
 
         self.actor = Actor(n_inputs, n_actions, alpha)
         self.critic = Critic(n_inputs, alpha)
-        # n_inputs = state_dims
+        
         self.memory = PPOMemory(mem_size=self.horizon, state_dim=n_inputs, action_dim=n_actions, batch_size=self.batch_size)
     
     def remember(self, state, action, probs, vals, reward, done):
         self.memory.store_memory(state, action, probs, vals, reward, done)
+
+    def clear_optimizer():
+        self.actor.clear_optimizer()
+        self.critic.clear_optimizer()
     
     def save_models(self):
         print("...saving models...")
@@ -245,14 +260,3 @@ class Agent:
 
             advantage = torch.tensor(advantage).to(self.actor.device)
             values = torch.tensor(vals_arr).to(self.actor.device)
-
-
-
-        
-
-
-
-
-
-
-
