@@ -9,3 +9,6 @@ setuptools==80.10.2
 sympy==1.14.0
 torch==2.10.0
 typing-extensions==4.15.0
+cloudpickle==3.1.2 
+farama-notifications==0.0.4 
+gymnasium==1.2.3
