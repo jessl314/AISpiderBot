@@ -30,6 +30,8 @@ Other things to check:
 - also need to check training loop code overall, check in with Cady, see if there is anything simple is left that can be assigned
 - matplotlib? -> for creating graphs/visualizing how the model is being trained. like visually seeing the loss function etc. great for testing! -> like in CS 178 :)
 
+- libraries to check: lidar, laspy
+
 How to implement your own code:
 if you guys want to mess with the code without messing things up (also assuming you have vscode and git) do the following:
 - make your own branch (git checkout <your_name>  -> replace "<your_name>" with your name). run the same command to make sure you are on it. can also make in github.
