@@ -237,14 +237,68 @@ class Agent:
                     # Temporal Difference Error: difference between what robot expects to happen vs what actually happened
                     # TD = (reward + gamma * value_next) - value_curr
                     next_val = vals_arr[t + 1]
-                    delta = (reward_arr[t] + self.gamma * next_val * (1 - int(done_arr[t]))) - vals_arr[t]
+                    delta = (reward_arr[t] + self.gamma * next_val * (1 - int(done_arr[t])) - vals_arr[t])
                     
                     # GAE formula: smooths the advantages across time
                     # generalized advantage estimation
                     advantage[t] = last_gae_lam = delta + self.gamma * self.gae_lambda * (1 - int(done_arr[t])) * last_gae_lam
 
             advantage = torch.tensor(advantage).to(self.actor.device)
-            values = torch.tensor(vals_arr).to(self.actor.device)
+            vals_arr = torch.tensor(vals_arr).to(self.actor.device)
+
+            for _ in range(self.n_epochs):
+                for batch in batches:
+                    states = torch.tensor(state_arr[batch], dtype=torch.float).to(self.actor.device)
+                    old_probs = torch.tensor(old_probs_arr[batch], dtype=torch.float).to(self.actor.device)
+                    actions = torch.tensor(action_arr[batch]).to(self.actor.device)
+
+                    # after getting critic state value we sqyeeze the array such that we are left with one feature representing the critic value at that specific moment
+                    critic_val = self.critic(states)
+                    critic_val = torch.squeeze(critic_val)
+                   
+                    # calculating log likelihood for probability distribution of potential actions to take
+                    # probability density of the actions we just took (new) compared to probability density at the exact moment the actions were taken (old, prior to change from actions)
+                    # this is a measure of how well the new policy explains the the actions the robot took while walking
+                    dist = self.actor(states)
+                    new_probs = dist.log_prob(actions).sum(dim=-1)
+                    # converting our logarithmed new and old probability densities back to regular ratio using subtraction
+                    # to avoid division error??
+                    # so if ratio > 1, new brain is more likely to make a particular move, opposite for less than 1, agreement if equal.
+                    prob_ratio = (new_probs - old_probs).exp()
+                    # change the weights in a way that is safe for robot, clipping it which limits how much new policy can deviate from old policy in single update
+                    weighted_probs = advantage[batch] * prob_ratio
+                    weighted_clipped_probs = torch.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip) * advantage[batch]
+                    # maximize reward so we using -, the single scalar number is average "error"/"adjustment" needed for entire batch
+                    actor_loss = -torch.min(weighted_probs, weighted_clipped_probs).mean()
+
+                    # clears memory of gradients?
+                    self.actor.optimizer.zero_grad()
+                    self.critic.optimizer.zero_grad()
+
+                    # returns: target value, estimate of the actual reward for the steps taken
+                    # MSE function ->  minimizing loss for the Critic neural network model
+                    returns = advantage[batch] + vals_arr[batch]
+                    critic_loss = ((returns - critic_val) ** 2).mean()
+                    # total loss = actor_loss + 0.5 * critic_loss
+                    total_loss = actor_loss + 0.5 * critic_loss
+                    
+                    # fills weights with gradient info
+                    total_loss.backward()
+
+                    # actually take steps in the gradients/move weights
+                    self.actor.optimizer.step()
+                    self.critic.optimizer.step()
+                
+                print(f"Epoch {_} | Actor Loss: {actor_loss.item():.4f} | Critic Loss: {critic_loss.mean().item():.4f}")
+                    
+
+        
+
+
+
+
+
+
 
 
 
