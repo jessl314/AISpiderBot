@@ -63,6 +63,8 @@ class PPOMemory:
         self.rewards[index] = reward
         self.dones[index] = done
 
+        if self.ptr == self.mem_size:
+            return
         self.ptr = (self.ptr + 1) % self.mem_size
 
     def clear_memory(self):
@@ -251,7 +253,7 @@ class Agent:
                 for k in range(t, len(reward_arr) - 1):
                     # Temporal Difference Error: difference between what robot expects to happen vs what actually happened
                     # TD = (reward + gamma * value_next) - value_curr
-                    next_val = vals_arr[t + 1]
+                    next_val = vals_arr[k + 1]
                     delta = (reward_arr[t] + self.gamma * next_val * (1 - int(done_arr[t]))) - vals_arr[t]
                     
                     # GAE formula: smooths the advantages across time
